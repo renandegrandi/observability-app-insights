@@ -1,8 +1,8 @@
-﻿namespace WebApplication.Outputs.V1
+﻿namespace Application.Outputs.V1
 {
-    public class PedidoOutput
+    public class OrderOutput
     {
-        public PedidoOutput()
+        public OrderOutput()
         {
             Id = Guid.NewGuid();
         }

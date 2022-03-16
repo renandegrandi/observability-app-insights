@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Azure;
+
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
 
 var logging = builder.Logging;
@@ -9,9 +11,16 @@ services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
 services.AddApplicationInsightsTelemetry(configuration);
 
+services.AddAzureClients((builder) =>
+{
+    builder.AddServiceBusClient(configuration["ServiceBus:ConnectionString"])
+        .WithName("ExemploSB");
+});
+
 logging.ClearProviders()
     .AddConsole()
     .AddApplicationInsights()
+    .AddEventSourceLogger()
     .AddConfiguration(configuration);
 
 var app = builder.Build();

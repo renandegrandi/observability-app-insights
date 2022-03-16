@@ -1,8 +1,10 @@
-﻿using Azure.Messaging.ServiceBus;
-using HostedService.Commands.V1;
+﻿using Application.Inputs.V1;
+using Application.Services;
+using Azure.Messaging.ServiceBus;
+using Domain.Commands.V1;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -13,17 +15,19 @@ namespace HostedService
     internal class AppHostedService : IHostedService
     {
         private const string QueueName = "order-create-command";
+
         private readonly ServiceBusClient _serviceBusClient;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IOrderService _orderService;
         private readonly ILogger<AppHostedService> _logger;
 
-        public AppHostedService(IConfiguration configuration,
+        public AppHostedService(IAzureClientFactory<ServiceBusClient> serviceBusClientFactory,
              TelemetryClient telemetryClient,
+             IOrderService orderService,
              ILogger<AppHostedService> logger)
         {
-            var sbConnectionString = configuration["ServiceBus:ConnectionString"];
-
-            _serviceBusClient = new ServiceBusClient(sbConnectionString);
+            _orderService = orderService;
+            _serviceBusClient = serviceBusClientFactory.CreateClient("ExemploSB");
             _telemetryClient = telemetryClient;
             _logger = logger;
         }
@@ -42,23 +46,49 @@ namespace HostedService
 
         private Task Processor_ProcessErrorAsync(ProcessErrorEventArgs arg)
         {
+            _telemetryClient.TrackException(arg.Exception);
+
             return Task.CompletedTask;
         }
 
         private async Task Processor_ProcessMessageAsync(ProcessMessageEventArgs arg)
         {
-            var body = arg.Message.Body.ToString();
+            var message = arg.Message;
+            var body = message.Body.ToString();
             var cancellationToken = arg.CancellationToken;
 
-            using (var telemetry = _telemetryClient.StartOperation<RequestTelemetry>("AppHostedService:ProcessMessage"))
+            message.ApplicationProperties.TryGetValue("Diagnostic-Id", out var objectId);
+
+            var diagnosticId = objectId.ToString();
+
+            var activity = new Activity("AppHostedService:ProcessMessage");
+
+            activity.SetParentId(diagnosticId);
+
+            using (var telemetry = _telemetryClient.StartOperation<RequestTelemetry>(activity))
             {
+
                 try
                 {
-                    var command = JsonSerializer.Deserialize<PedidoCreateCommand>(body);
+                    var command = JsonSerializer.Deserialize<OrderCreateCommand>(body);
 
-                    _logger.LogInformation("Pedido: {}, começando processamento!", command.Pedido.Id);
+                    var order = command.Order;
 
-                    _logger.LogInformation("Commando executado com sucesso para o pedido: {0}", command.Pedido.Id.ToString());
+                    var modifiedOrder = new OrderUpdateInput
+                    {
+                        Id = order.Id,
+                        Total = 30.00m,
+                        Status = Domain.Entities.OrderStatus.Finished
+                    };
+
+                    var result = await _orderService.UpdateAsync(modifiedOrder, cancellationToken);
+
+                    if (result == null) 
+                        throw new Exception("Order não foi encontrada");
+
+                    if (!result.Value) 
+                        throw new Exception("Falha na atualização da order");
+                    
                 }
                 catch (Exception ex)
                 {

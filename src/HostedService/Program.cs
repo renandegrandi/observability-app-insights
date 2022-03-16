@@ -1,5 +1,6 @@
 ﻿
 using HostedService;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,6 +33,7 @@ await new HostBuilder()
     .ConfigureServices((hostContext, service) =>
     {
         var configuration = hostContext.Configuration;
+
 
         service.AddHostedService<AppHostedService>();
 
