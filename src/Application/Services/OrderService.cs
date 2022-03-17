@@ -3,6 +3,8 @@ using Application.Outputs.V1;
 using Domain.Commands.V1;
 using Domain.Entities;
 using Domain.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
@@ -11,13 +13,16 @@ namespace Application.Services
     sealed class OrderService : IOrderService
     {
         private const string OrderKeyCached = "Order.";
-
+        
         private readonly IOrderRepostory _orderRepository;
         private readonly IDistributedCache _distributedCache;
+        private readonly TelemetryClient _telemetryClient;
 
         public OrderService(IOrderRepostory orderRepository,
-            IDistributedCache distributedCache)
+            IDistributedCache distributedCache,
+            TelemetryClient telemetryClient)
         {
+            _telemetryClient = telemetryClient;
             _orderRepository = orderRepository;
             _distributedCache = distributedCache;
         }
@@ -26,8 +31,16 @@ namespace Application.Services
         {
             var orderSerialized = JsonSerializer.Serialize(order);
 
-            await _distributedCache.SetStringAsync($"{OrderKeyCached}{order.Id}", orderSerialized, cancellationToken);
+            var key = $"{OrderKeyCached}{order.Id}";
 
+            using (var operation = _telemetryClient.StartOperation(new DependencyTelemetry
+            {
+                Type = "DistributedCache",
+                Name = "SetStringAsync",
+                Data = key
+            })) 
+                await _distributedCache.SetStringAsync(key, orderSerialized, cancellationToken);
+            
             return orderSerialized;
         }
 
@@ -73,7 +86,17 @@ namespace Application.Services
 
         public async Task<OrderOutput?> GetAsync(Guid id, CancellationToken cancellationToken)
         {
-            var orderCached = await _distributedCache.GetStringAsync($"{OrderKeyCached}{id}", cancellationToken);
+            var orderCached = string.Empty;
+
+            var key = $"{OrderKeyCached}{id}";
+
+            using (var operation = _telemetryClient.StartOperation(new DependencyTelemetry
+            {
+                Type = "DistributedCache",
+                Name = "GetStringAsync",
+                Data = key
+            }))
+                orderCached = await _distributedCache.GetStringAsync(key, cancellationToken);
 
             if (string.IsNullOrEmpty(orderCached))
             {

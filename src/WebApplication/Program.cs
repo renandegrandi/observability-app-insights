@@ -23,7 +23,6 @@ services.AddInfraestructure(configuration)
 logging.ClearProviders()
     .AddConsole()
     .AddApplicationInsights()
-    .AddEventSourceLogger()
     .AddConfiguration(configuration);
 
 var app = builder.Build();
