@@ -10,6 +10,14 @@ namespace Infraestructure.Data.Contexts.SqlServer.Configurations
         {
             builder
                 .HasKey((b) => b.Id);
+
+            builder
+                .Property((b) => b.Id)
+                .ValueGeneratedNever();
+
+            builder
+                .Property((b) => b.Total)
+                .HasColumnType("decimal");
         }
     }
 }

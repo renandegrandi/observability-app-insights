@@ -4,7 +4,9 @@ namespace Domain.Commands.V1
 {
     public class OrderCreateCommand
     {
-        public OrderCreateCommand(Order order)
+        public OrderCreateCommand() { } 
+
+        public OrderCreateCommand(Order order) : this()
         {
             Order = order;
         }

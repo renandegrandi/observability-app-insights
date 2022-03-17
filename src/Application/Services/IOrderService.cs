@@ -9,6 +9,6 @@ namespace Application.Services
 
         Task<bool?> UpdateAsync(OrderUpdateInput orderInput, CancellationToken cancellationToken);
 
-        Task<OrderOutput> GetAsync(Guid id, CancellationToken cancellationToken);
+        Task<OrderOutput?> GetAsync(Guid id, CancellationToken cancellationToken);
     }
 }

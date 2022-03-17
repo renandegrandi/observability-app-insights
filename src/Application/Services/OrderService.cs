@@ -22,18 +22,20 @@ namespace Application.Services
             _distributedCache = distributedCache;
         }
 
-        private async Task SetToCacheAsync(Order order, CancellationToken cancellationToken) 
+        private async Task<string> SetToCacheAsync(Order order, CancellationToken cancellationToken) 
         {
             var orderSerialized = JsonSerializer.Serialize(order);
 
             await _distributedCache.SetStringAsync($"{OrderKeyCached}{order.Id}", orderSerialized, cancellationToken);
+
+            return orderSerialized;
         }
 
         private void SimulateExceptionWithRandomValue() 
         {
             var random = new Random().Next(100);
 
-            if (random % 0 == 0)
+            if (random % 2 == 0)
                 throw new Exception("Demonstrando uma exception no código!");
         }
 
@@ -79,7 +81,7 @@ namespace Application.Services
 
                 if (order == null) return null;
 
-                await SetToCacheAsync(order, cancellationToken);
+                orderCached = await SetToCacheAsync(order, cancellationToken);
             }
 
             return JsonSerializer.Deserialize<OrderOutput?>(orderCached);       

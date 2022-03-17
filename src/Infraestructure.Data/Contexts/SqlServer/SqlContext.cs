@@ -8,7 +8,7 @@ namespace Infraestructure.Data.Contexts.SqlServer
     {
         public DbSet<Order> Order { get; set; }
 
-        public SqlContext(): base()
+        public SqlContext(DbContextOptions contextOptions) : base(contextOptions)
         {
 
         }

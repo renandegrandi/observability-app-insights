@@ -1,4 +1,6 @@
-using Microsoft.Extensions.Azure;
+using Application;
+using Infraestructure.Data;
+using Microsoft.ApplicationInsights.DependencyCollector;
 
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
 
@@ -9,13 +11,14 @@ var configuration = builder.Configuration;
 services.AddControllers();
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
-services.AddApplicationInsightsTelemetry(configuration);
+services.AddApplicationInsightsTelemetry(configuration)
+    .ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) =>
+    {
+        module.EnableSqlCommandTextInstrumentation = true;
+    });
 
-services.AddAzureClients((builder) =>
-{
-    builder.AddServiceBusClient(configuration["ServiceBus:ConnectionString"])
-        .WithName("ExemploSB");
-});
+services.AddInfraestructure(configuration)
+    .AddApplication();
 
 logging.ClearProviders()
     .AddConsole()

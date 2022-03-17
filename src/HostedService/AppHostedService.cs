@@ -1,7 +1,7 @@
 ﻿using Application.Inputs.V1;
 using Application.Services;
 using Azure.Messaging.ServiceBus;
-using Domain.Commands.V1;
+using HostedService.Inputs;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Azure;
@@ -54,23 +54,30 @@ namespace HostedService
         private async Task Processor_ProcessMessageAsync(ProcessMessageEventArgs arg)
         {
             var message = arg.Message;
+
             var body = message.Body.ToString();
+
+            if (string.IsNullOrEmpty(body)) return;
+
             var cancellationToken = arg.CancellationToken;
-
-            message.ApplicationProperties.TryGetValue("Diagnostic-Id", out var objectId);
-
-            var diagnosticId = objectId.ToString();
 
             var activity = new Activity("AppHostedService:ProcessMessage");
 
-            activity.SetParentId(diagnosticId);
+            message.ApplicationProperties.TryGetValue("Diagnostic-Id", out var objectId);
+
+            var diagnosticId = (objectId??"").ToString();
+
+            if(!string.IsNullOrEmpty(diagnosticId))
+                activity.SetParentId(diagnosticId);
 
             using (var telemetry = _telemetryClient.StartOperation<RequestTelemetry>(activity))
             {
 
                 try
                 {
-                    var command = JsonSerializer.Deserialize<OrderCreateCommand>(body);
+                    var command = JsonSerializer.Deserialize<OrderCreateCommandInput>(body);
+
+                    if (command == null) return;
 
                     var order = command.Order;
 

@@ -1,6 +1,8 @@
 ﻿
+using Application;
 using HostedService;
-using Microsoft.Extensions.Azure;
+using Infraestructure.Data;
+using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,11 +36,15 @@ await new HostBuilder()
     {
         var configuration = hostContext.Configuration;
 
-
-        service.AddHostedService<AppHostedService>();
-
-        service.AddOptions()
-            .AddApplicationInsightsTelemetryWorkerService(configuration);
+        service
+            .AddHostedService<AppHostedService>()
+            .AddInfraestructure(configuration)
+            .AddApplication()
+            .AddApplicationInsightsTelemetryWorkerService(configuration)
+            .ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) =>
+            {
+                module.EnableSqlCommandTextInstrumentation = true;
+            });
     })
     .RunConsoleAsync()
     .ConfigureAwait(false);

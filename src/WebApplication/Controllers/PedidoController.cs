@@ -1,5 +1,6 @@
 ﻿using Application.Inputs.V1;
 using Application.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApplication.Controllers
@@ -9,12 +10,15 @@ namespace WebApplication.Controllers
     public class PedidoController : ControllerBase
     {
         private readonly ILogger<PedidoController> _logger;
+        private readonly TelemetryClient _telemetryClient;
         private readonly IOrderService _orderService;
 
         public PedidoController(ILogger<PedidoController> logger,
+            TelemetryClient telemetryClient,
             IOrderService orderService)
         {
             _logger = logger;
+            _telemetryClient = telemetryClient;
             _orderService = orderService;
         }
 
@@ -29,28 +33,30 @@ namespace WebApplication.Controllers
 
                 return Created($"api/pedidos/{result}", null);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _telemetryClient.TrackException(ex);
                 return StatusCode(500);
             }
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetAsync([FromQuery(Name = "id")]Guid id)
+        public async Task<IActionResult> GetAsync([FromRoute(Name = "id")]Guid id)
         {
             try
             {
                 var cancellationToken = HttpContext.RequestAborted;
 
-                var result = _orderService.GetAsync(id, cancellationToken);
+                var result = await _orderService.GetAsync(id, cancellationToken);
 
                 if (result == null)
                     return NotFound();
 
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _telemetryClient.TrackException(ex);
                 return StatusCode(500);
             }
         }
