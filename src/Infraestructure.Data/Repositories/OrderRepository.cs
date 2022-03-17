@@ -2,9 +2,11 @@
 using Domain.Commands.V1;
 using Domain.Entities;
 using Domain.Repositories;
+using Infraestructure.Data.Contexts.MongoDB;
 using Infraestructure.Data.Contexts.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
+using MongoDB.Driver;
 using System.Text.Json;
 
 namespace Infraestructure.Data.Repositories
@@ -15,19 +17,24 @@ namespace Infraestructure.Data.Repositories
 
         private readonly SqlContext _sqlContext;
         private readonly ServiceBusClient _messageContext;
+        private readonly IMongoCollection<Order> _collection;
 
         public OrderRepository(SqlContext sqlContext,
-            IAzureClientFactory<ServiceBusClient> serviceBusClientFactory)
+            IAzureClientFactory<ServiceBusClient> serviceBusClientFactory,
+            IMongoContext mongoContext)
         {
             _sqlContext = sqlContext;
+            _collection = mongoContext.Database.GetCollection<Order>("Orders");
             _messageContext = serviceBusClientFactory.CreateClient("ExemploSB");
         }
 
 
-        public Task CreateAsync(Order order, CancellationToken cancellationToken)
+        public async Task CreateAsync(Order order, CancellationToken cancellationToken)
         {
+            //simulate integration with mongodb.
             _sqlContext.Add(order);
-            return _sqlContext.SaveChangesAsync(cancellationToken);
+            await _collection.InsertOneAsync(order, null, cancellationToken);
+            await _sqlContext.SaveChangesAsync(cancellationToken);
         }
 
         public Task<Order?> GetAsync(Guid id, CancellationToken cancellationToken)

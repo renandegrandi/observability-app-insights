@@ -11,11 +11,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ports", "Ports", "{D50B1731
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{59004C45-AD90-44EA-BC49-86C253AD0DA2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "src\Application\Application.csproj", "{A731E668-48D9-435A-AC5D-39ABA445CEE5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "src\Application\Application.csproj", "{A731E668-48D9-435A-AC5D-39ABA445CEE5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infraestructure.Data", "src\Infraestructure.Data\Infraestructure.Data.csproj", "{B3DA5841-F6DF-43AE-B23C-2D1F58F9C092}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infraestructure.Data", "src\Infraestructure.Data\Infraestructure.Data.csproj", "{B3DA5841-F6DF-43AE-B23C-2D1F58F9C092}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain.csproj", "{BE3DB9F0-4F21-4938-B43C-1DD72F57FC56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "src\Domain\Domain.csproj", "{BE3DB9F0-4F21-4938-B43C-1DD72F57FC56}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D1B79531-9DEE-4432-8DE2-488A493FDD42}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

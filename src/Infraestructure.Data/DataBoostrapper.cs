@@ -1,10 +1,12 @@
 ﻿using Domain.Repositories;
+using Infraestructure.Data.Contexts.MongoDB;
 using Infraestructure.Data.Contexts.SqlServer;
 using Infraestructure.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.ApplicationInsights.DependencyInjection;
 
 namespace Infraestructure.Data
 {
@@ -28,6 +30,10 @@ namespace Infraestructure.Data
             {
                 options.UseSqlServer(configuration.GetConnectionString("SqlServer"));
             });
+
+            service.AddMongoClient(configuration.GetConnectionString("MongoDB"));
+
+            service.AddSingleton<IMongoContext, MongoContext>();
 
             service.AddScoped<IOrderRepostory, OrderRepository>();
 
