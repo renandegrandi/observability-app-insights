@@ -1,8 +1,7 @@
-﻿using Azure.Messaging.ServiceBus;
+﻿using Application.Inputs.V1;
+using Application.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
-using WebApplication.Commands.V1;
-using WebApplication.Outputs.V1;
 
 namespace WebApplication.Controllers
 {
@@ -10,50 +9,56 @@ namespace WebApplication.Controllers
     [ApiController]
     public class PedidoController : ControllerBase
     {
-        private const string Queue = "order-create-command";
-        private readonly string _sbConnectionString;
-        private ILogger<PedidoController> _logger;
+        private readonly ILogger<PedidoController> _logger;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly IOrderService _orderService;
 
-        public PedidoController(IConfiguration configuration,
-            ILogger<PedidoController> logger)
+        public PedidoController(ILogger<PedidoController> logger,
+            TelemetryClient telemetryClient,
+            IOrderService orderService)
         {
-            _sbConnectionString = configuration["ServiceBus:ConnectionString"];
             _logger = logger;
+            _telemetryClient = telemetryClient;
+            _orderService = orderService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync() 
+        public async Task<IActionResult> PostAsync([FromBody] OrderCreateInput input)  
         {
-            var cancellationToken = HttpContext.RequestAborted;
-
-            var sender = new ServiceBusClient(_sbConnectionString)
-                .CreateSender(Queue);
-
-            var command = new PedidoCreateCommand
+            try
             {
-                Pedido = new PedidoOutput()
-            };
+                var cancellationToken = HttpContext.RequestAborted;
 
-            var commadSerialized = JsonSerializer.Serialize(command);
+                var result = await _orderService.CreateAsync(input, cancellationToken);
 
-            var message = new ServiceBusMessage(commadSerialized);
-
-            await sender.SendMessageAsync(message, cancellationToken)
-                .ConfigureAwait(false);
-
-            _logger.LogInformation("Pedido: {0}, enviado com sucesso!", command.Pedido.Id);
-
-            return Created($"api/pedidos/{command.Pedido.Id}", null);
+                return Created($"api/pedidos/{result}", null);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return StatusCode(500);
+            }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAsync()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAsync([FromRoute(Name = "id")]Guid id)
         {
-            await Task.CompletedTask;
+            try
+            {
+                var cancellationToken = HttpContext.RequestAborted;
 
-            var output = new PedidoOutput();
+                var result = await _orderService.GetAsync(id, cancellationToken);
 
-            return Ok(output);
+                if (result == null)
+                    return NotFound();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return StatusCode(500);
+            }
         }
     }
 }
