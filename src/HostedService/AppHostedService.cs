@@ -72,6 +72,8 @@ namespace HostedService
 
             using (var telemetry = _telemetryClient.StartOperation<RequestTelemetry>(activity))
             {
+                telemetry.Telemetry.Name = activity.OperationName;
+                telemetry.Telemetry.Context.Operation.Name = activity.OperationName;
 
                 try
                 {
