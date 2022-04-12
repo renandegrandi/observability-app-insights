@@ -40,6 +40,24 @@ namespace WebApplication.Controllers
             }
         }
 
+        [HttpGet()]
+        public async Task<IActionResult> GetAsync()
+        {
+            try
+            {
+                var cancellationToken = HttpContext.RequestAborted;
+
+                var result = await _orderService.GetAsync(cancellationToken);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return StatusCode(500);
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAsync([FromRoute(Name = "id")]Guid id)
         {

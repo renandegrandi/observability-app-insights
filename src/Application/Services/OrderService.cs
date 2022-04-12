@@ -109,5 +109,16 @@ namespace Application.Services
 
             return JsonSerializer.Deserialize<OrderOutput?>(orderCached);       
         }
+
+        public  async Task<IEnumerable<OrderOutput>> GetAsync(CancellationToken cancellationToken)
+        {
+            var ordersDb = await _orderRepository.GetAsync(cancellationToken);
+
+            if(!ordersDb.Any()) return new List<OrderOutput>();
+
+            var dbSerialized = JsonSerializer.Serialize(ordersDb);
+
+            return JsonSerializer.Deserialize<IEnumerable<OrderOutput>>(dbSerialized);
+        }
     }
 }

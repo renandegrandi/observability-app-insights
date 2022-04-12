@@ -51,6 +51,13 @@ namespace HostedService
             return Task.CompletedTask;
         }
 
+        private decimal SimulateNewTotalValue(decimal actual) 
+        {
+            var random = new Random().Next(10);
+
+            return actual + random;
+        }
+
         private async Task Processor_ProcessMessageAsync(ProcessMessageEventArgs arg)
         {
             var message = arg.Message;
@@ -81,10 +88,12 @@ namespace HostedService
 
                     var order = command.Order;
 
+                    var modifiedTotalValue = SimulateNewTotalValue(order.Total);
+
                     var modifiedOrder = new OrderUpdateInput
                     {
                         Id = order.Id,
-                        Total = 30.00m,
+                        Total = modifiedTotalValue,
                         Status = Domain.Entities.OrderStatus.Finished
                     };
 

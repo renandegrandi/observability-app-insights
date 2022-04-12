@@ -11,6 +11,8 @@ namespace Domain.Repositories
 
         Task<Order?> GetAsync(Guid id, CancellationToken cancellationToken);
 
+        Task<List<Order>> GetAsync(CancellationToken cancellationToken);
+
         Task SendCommandAsync(OrderCreateCommand command, CancellationToken cancellation);
     }
 }

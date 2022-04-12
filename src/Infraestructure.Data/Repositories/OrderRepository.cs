@@ -45,6 +45,13 @@ namespace Infraestructure.Data.Repositories
 
         }
 
+        public Task<List<Order>> GetAsync(CancellationToken cancellationToken)
+        {
+            return _sqlContext
+                .Order
+                .ToListAsync(cancellationToken);
+        }
+
         public Task UpdateAsync(Order order, CancellationToken cancellationToken)
         {
             _sqlContext.Update(order);
